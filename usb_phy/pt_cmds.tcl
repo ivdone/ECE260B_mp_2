@@ -451,5 +451,12 @@ proc checkLegit { cell_name } {
             return 0
         }
     }
+    foreach_in_collection inPin [get_pins -of $cell_name -filter "direction==in"] {
+        set maxTran [PtGetPinMaxTran $inPin]
+        set Tran [PtGetPinTran $inPin]
+        if { $maxTran < $Tran } {
+            return 0
+        }
+    }
     return 1
 }
