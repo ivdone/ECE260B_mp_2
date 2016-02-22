@@ -1,0 +1,18 @@
+Information: Derived library resistance unit is 1.000000 Kohm (Time unit is 0 ns, and Capacitance unit is 0.001000 pF). (DES-028)
+
+****************************************
+Report : read_parasitics /home/linux/ieng6/ee260b/zhz154/mp_2/example/usb_phy.spef
+Design : usb_phy
+Version: K-2015.06-SP3-1
+Date   : Sun Feb 21 17:41:20 2016
+****************************************
+
+        0 error(s)
+        Format is SPEF
+        Annotated nets                   :          478
+        Annotated capacitances           :         5076
+        Annotated resistances            :         4592
+        Reduced coupling capacitances    :          110
+        Annotated PI models              :            0
+        Annotated Elmore delays          :            0
+
