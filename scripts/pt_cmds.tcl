@@ -433,17 +433,30 @@ proc PtCellFanout { cell_name } {
 
 proc checkLegit { cell_name } {
     set newWNS [ PtWorstSlack clk ]
+
     if { $newWNS < 0.0 } {
         return 0
     }
-    foreach_in_collection pin [get_pins -of $cell_name] {
-        set maxTran [PtGetPinMaxTran pin]
-        set Tran [PtGetPinTran pin]
-        set maxCap [PtGetPinMaxCap pin]
-        set Cap [PtGetPinLoadCap pin]
-        if ( $maxTran < $Tran || $maxCap < $Cap) {
+
+    foreach_in_collection outPin [get_pins -of $cell_name -filter "direction==out"] {
+        set maxTran [PtGetPinMaxTran $outPin]
+        set Tran [PtGetPinTran $outPin]
+        set maxCap [PtGetPinMaxCap $outPin]
+        set Cap [PtGetPinLoadCap $outPin]
+
+        if { $maxTran < $Tran } {
             return 0
-        } 
+        }
+        if { $maxCap < $Cap} {
+            return 0
+        }
+    }
+    foreach_in_collection inPin [get_pins -of $cell_name -filter "direction==in"] {
+        set maxTran [PtGetPinMaxTran $inPin]
+        set Tran [PtGetPinTran $inPin]
+        if { $maxTran < $Tran } {
+            return 0
+        }
     }
     return 1
 }

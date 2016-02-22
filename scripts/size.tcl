@@ -14,7 +14,10 @@ puts $outFp "======================================"
 set cellList [get_cell *]
 set VtswapCnt 0
 set SizeswapCnt 0
-foreach_in_collection cell $cellList {
+
+set newCellList [sortCells $cellList]
+
+foreach_in_collection cell $newCellList {
     set cellName [get_attri $cell base_name]
     set libcell [get_lib_cells -of_objects $cellName]
     set libcellName [get_attri $libcell base_name]
@@ -26,27 +29,124 @@ foreach_in_collection cell $cellList {
         set newlibcellName [string replace $libcellName 4 4 m] 
         size_cell $cellName $newlibcellName
         
-        set newWNS [ PtWorstSlack clk ]
-        if { $newWNS < 0.0 } {
+        set checkRs [ checkLegit $cellName ]
+        if { $checkRs == 0 } {
             size_cell $cellName $libcellName
         } else {
             incr VtswapCnt
             puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
         }
     }
-    #cell size swap example (convert all cells of size 08 to 04)...
-    if { [regexp {[a-z][a-z][0-9][0-9][smf]08} $libcellName] } { 
-        set newlibcellName [string replace $libcellName 5 6 "04"]
+    #Vt cell swap example (convert all medium cells (i.e. NVT) to slow cells (i.e. HVT)...
+
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+
+    if { [regexp {[a-z][a-z][0-9][0-9]m[0-9][0-9]} $libcellName] } { 
+        set newlibcellName [string replace $libcellName 4 4 s] 
         size_cell $cellName $newlibcellName
         
-        set newWNS [ PtWorstSlack clk ]
-        if { $newWNS < 0.0 } {
+        set checkRs [ checkLegit $cellName ]
+        if { $checkRs == 0 } {
             size_cell $cellName $libcellName
         } else {
-            incr SizeswapCnt
+            incr VtswapCnt
             puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
         }
     }
+    #       ----------------------------------------------------------------------
+    #cell size swap 1
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    set newlibcellName [getNextSizeDown $libcellName]
+    size_cell $cellName $newlibcellName
+        
+    set checkRs [ checkLegit $cellName ]
+    if { $checkRs == 0 } {
+        size_cell $cellName $libcellName
+    } else {
+        incr SizeswapCnt
+        puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
+    }
+    #cell size swap 2
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    set newlibcellName [getNextSizeDown $libcellName]
+    size_cell $cellName $newlibcellName
+        
+    set checkRs [ checkLegit $cellName ]
+    if { $checkRs == 0 } {
+        size_cell $cellName $libcellName
+    } else {
+        incr SizeswapCnt
+        puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
+    }
+    #cell size swap 3
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    set newlibcellName [getNextSizeDown $libcellName]
+    size_cell $cellName $newlibcellName
+        
+    set checkRs [ checkLegit $cellName ]
+    if { $checkRs == 0 } {
+        size_cell $cellName $libcellName
+    } else {
+        incr SizeswapCnt
+        puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
+    }
+    #cell size swap 4
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    set newlibcellName [getNextSizeDown $libcellName]
+    size_cell $cellName $newlibcellName
+        
+    set checkRs [ checkLegit $cellName ]
+    if { $checkRs == 0 } {
+        size_cell $cellName $libcellName
+    } else {
+        incr SizeswapCnt
+        puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
+    }
+    #cell size swap 5
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    set newlibcellName [getNextSizeDown $libcellName]
+    size_cell $cellName $newlibcellName
+        
+    set checkRs [ checkLegit $cellName ]
+    if { $checkRs == 0 } {
+        size_cell $cellName $libcellName
+    } else {
+        incr SizeswapCnt
+        puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
+    }
+    #cell size swap 6
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    set newlibcellName [getNextSizeDown $libcellName]
+    size_cell $cellName $newlibcellName
+        
+    set checkRs [ checkLegit $cellName ]
+    if { $checkRs == 0 } {
+        size_cell $cellName $libcellName
+    } else {
+        incr SizeswapCnt
+        puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
+    }
+    #cell size swap 7
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    set newlibcellName [getNextSizeDown $libcellName]
+    size_cell $cellName $newlibcellName
+        
+    set checkRs [ checkLegit $cellName ]
+    if { $checkRs == 0 } {
+        size_cell $cellName $libcellName
+    } else {
+        incr SizeswapCnt
+        puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
+    }
+    #       ----------------------------------------------------------------------    
 }
 
 set finalWNS  [ PtWorstSlack clk ]

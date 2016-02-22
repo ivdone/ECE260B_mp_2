@@ -1,4 +1,4 @@
-set design _DESIGN_
+set design usb_phy
 
 loadConfig ./temp.conf 0
 commitConfig

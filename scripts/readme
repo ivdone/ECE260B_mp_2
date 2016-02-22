@@ -1,6 +1,11 @@
-run_pt.tcl  	: PT script for sizing
-size.tcl    	: sizing methodology (implement your sizing algorithm here)
-run_eco.tcl 	: ECO flow in SOC Encounter
-eva_pt.tcl  	: PT script to evaluate post-ECO timing and power
-pt_cmd.tcl  	: useful PT functions
-temp.conf	: configuration file for SOCE
+1. run sizing
+pt_shell -f run_pt.tcl
+
+2. run ECO
+encounter -nowin -init run_eco.tcl
+
+3. timing and power analysis after ECO
+pt_shell -f eva_pt.tcl
+
+
+

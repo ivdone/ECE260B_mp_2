@@ -3,8 +3,8 @@ source ./pt_cmds.tcl
 ### add design information here
 set power_enable_analysis TRUE
 set power_analysis_mode averaged
-
-set design  _DESIGN_
+set rc_cache_min_max_rise_fall_ceff true
+set design  usb_phy
 
 set timing_remove_clock_reconvergence_pessimism true
 
