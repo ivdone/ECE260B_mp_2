@@ -26,7 +26,7 @@ foreach_in_collection cell $newCellList {
     size_cell $cellName $libcellName
         
         set checkRs [ checkLegit $cellName ]
-        if { $checkRs == 0 } {
+        if { $checkRs < 1.0 } {
             size_cell $cellName $libcellName
         } else {
             incr VtswapCnt
@@ -45,7 +45,7 @@ foreach_in_collection cell $newCellList {
     size_cell $cellName $libcellName
         
         set checkRs [ checkLegit $cellName ]
-        if { $checkRs == 0 } {
+        if { $checkRs < 1.0 } {
             size_cell $cellName $libcellName
         } else {
             incr VtswapCnt

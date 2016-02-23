@@ -30,7 +30,7 @@ foreach_in_collection cell $newCellList {
         size_cell $cellName $newlibcellName
         
         set checkRs [ checkLegit $cellName ]
-        if { $checkRs < 1.0 } {
+        if { $checkRs == 0 } {
             size_cell $cellName $libcellName
         } else {
             incr VtswapCnt
@@ -47,7 +47,7 @@ foreach_in_collection cell $newCellList {
         size_cell $cellName $newlibcellName
         
         set checkRs [ checkLegit $cellName ]
-        if { $checkRs < 1.0 } {
+        if { $checkRs == 0 } {
             size_cell $cellName $libcellName
         } else {
             incr VtswapCnt
@@ -62,7 +62,7 @@ foreach_in_collection cell $newCellList {
     size_cell $cellName $newlibcellName
         
     set checkRs [ checkLegit $cellName ]
-    if { $checkRs < 1.0 } {
+    if { $checkRs == 0 } {
         size_cell $cellName $libcellName
     } else {
         incr SizeswapCnt
@@ -75,7 +75,7 @@ foreach_in_collection cell $newCellList {
     size_cell $cellName $newlibcellName
         
     set checkRs [ checkLegit $cellName ]
-    if { $checkRs < 1.0 } {
+    if { $checkRs == 0 } {
         size_cell $cellName $libcellName
     } else {
         incr SizeswapCnt
@@ -88,7 +88,7 @@ foreach_in_collection cell $newCellList {
     size_cell $cellName $newlibcellName
         
     set checkRs [ checkLegit $cellName ]
-    if { $checkRs < 1.0 } {
+    if { $checkRs == 0 } {
         size_cell $cellName $libcellName
     } else {
         incr SizeswapCnt
@@ -101,7 +101,7 @@ foreach_in_collection cell $newCellList {
     size_cell $cellName $newlibcellName
         
     set checkRs [ checkLegit $cellName ]
-    if { $checkRs < 1.0 } {
+    if { $checkRs == 0 } {
         size_cell $cellName $libcellName
     } else {
         incr SizeswapCnt
@@ -114,7 +114,7 @@ foreach_in_collection cell $newCellList {
     size_cell $cellName $newlibcellName
         
     set checkRs [ checkLegit $cellName ]
-    if { $checkRs < 1.0 } {
+    if { $checkRs == 0 } {
         size_cell $cellName $libcellName
     } else {
         incr SizeswapCnt
@@ -127,7 +127,7 @@ foreach_in_collection cell $newCellList {
     size_cell $cellName $newlibcellName
         
     set checkRs [ checkLegit $cellName ]
-    if { $checkRs < 1.0 } {
+    if { $checkRs == 0 } {
         size_cell $cellName $libcellName
     } else {
         incr SizeswapCnt
@@ -138,15 +138,16 @@ foreach_in_collection cell $newCellList {
     set libcellName [get_attri $libcell base_name]
     set newlibcellName [getNextSizeDown $libcellName]
     size_cell $cellName $newlibcellName
-        
+    
     set checkRs [ checkLegit $cellName ]
-    if { $checkRs < 1.0 } {
+    if { $checkRs == 0 } {
         size_cell $cellName $libcellName
     } else {
         incr SizeswapCnt
         puts $outFp "- cell ${cellName} is swapped to $newlibcellName"
     }
     #       ----------------------------------------------------------------------    
+    
 }
 
 set finalWNS  [ PtWorstSlack clk ]
