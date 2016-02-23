@@ -383,7 +383,7 @@ proc getNextSizeDown { cell } {
     }
 
     if { [regexp {[a-z][a-z][0-9][0-9][smf]01} $cell]} {
-	return "skip"
+	return $cell
     }
 }
 
