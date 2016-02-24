@@ -399,7 +399,7 @@ proc getNextVtDown { libcellName } {
 	}
 	
 	if { [regexp {[a-z][a-z][0-9][0-9]s[0-9][0-9]} $libcellName] } { 
-		return "skip"
+		return $libcellName
 	}
 
 }
@@ -462,10 +462,6 @@ proc checkLegit { cell_name } {
 }
 
 proc setSensitivity {cell} {
-    
-    define_user_attribute -type float -class cell Sensitivity
-    define_user_attribute -type string -class cell newlibcellName
- 
     #get cell slack
     set cellName [get_attri $cell base_name]
     set libcell [get_lib_cells -of_objects $cellName]
@@ -496,88 +492,35 @@ proc setSensitivity {cell} {
       set_user_attribute $cell newlibcellName $libcellName
       return 0
     }
-    set cellNameDown1 [getNextSizeDown $libcellName]
-    set cellNameDown2 [getNextSizeDown $cellNameDown1]
-    set cellNameUp1 [getNextVtUp $libcellName]
-    set cellNameUp2 [getNextVtUp $cellNameUp1]
-    set cellNameDown1Up1 [getNextVtUp $cellNameDown1]
-    set cellNameDown1Up2 [getNextVtUp $cellNameDown1Up1]
-    set cellNameDown2Up1 [getNextSizeDown $cellNameDown1Up1]
-    set cellNameDown2Up2 [getNextVtUp $cellNameDown2Up1]
-
-
-    size_cell $cellName $cellNameDown1
+    set cellNameSizeDown [getNextSizeDown $libcellName]
+    set cellNameVtUp [getNextVtDown $libcellName]
+    
+    if { $cellNameSizeDown != $libcellName } {
+    size_cell $cellName $cellNameSizeDown
     set leakAftD1U0 [PtLeakPower]
     size_cell $cellName $libcellName
     set deltaLeakD1U0 [expr $leakPre - $leakAftD1U0]
     set senD1U0 [expr $deltaLeakD1U0 * $cellSlack / $pathNum]
+    } else {
+      set senD1U0 0.0
+    }
     
-    size_cell $cellName $cellNameDown2
-    set leakAftD2U0 [PtLeakPower]
-    size_cell $cellName $libcellName
-    set deltaLeakD2U0 [expr $leakPre - $leakAftD2U0]
-    set senD2U0 [expr $deltaLeakD2U0 * $cellSlack / $pathNum]
-
-    size_cell $cellName $cellNameUp1
+    if { $cellNameVtUp != $libcellName } {
+    size_cell $cellName $cellNameVtUp
     set leakAftD0U1 [PtLeakPower]
     size_cell $cellName $libcellName
     set deltaLeakD0U1 [expr $leakPre - $leakAftD0U1]
     set senD0U1 [expr $deltaLeakD0U1 * $cellSlack / $pathNum]
+    } else {
+    set senD0U1 0.0
+    }
 
-    size_cell $cellName $cellNameUp2
-    set leakAftD0U2 [PtLeakPower]
-    size_cell $cellName $libcellName
-    set deltaLeakD0U2 [expr $leakPre - $leakAftD0U2]
-    set senD0U2 [expr $deltaLeakD0U2 * $cellSlack / $pathNum]
-
-    size_cell $cellName $cellNameDown1Up1
-    set leakAftD1U1 [PtLeakPower]
-    size_cell $cellName $libcellName
-    set deltaLeakD1U1 [expr $leakPre - $leakAftD1U1]
-    set senD1U1 [expr $deltaLeakD1U1 * $cellSlack / $pathNum]
-
-    size_cell $cellName $cellNameDown1Up2
-    set leakAftD1U2 [PtLeakPower]
-    size_cell $cellName $libcellName
-    set deltaLeakD1U2 [expr $leakPre - $leakAftD1U2]
-    set senD1U2 [expr $deltaLeakD1U2 * $cellSlack / $pathNum]
-
-    size_cell $cellName $cellNameDown2Up1
-    set leakAftD2U1 [PtLeakPower]
-    size_cell $cellName $libcellName
-    set deltaLeakD2U1 [expr $leakPre - $leakAftD2U1]
-    set senD2U1 [expr $deltaLeakD2U1 * $cellSlack / $pathNum]
-
-    size_cell $cellName $cellNameDown2Up2
-    set leakAftD2U2 [PtLeakPower]
-    size_cell $cellName $libcellName
-    set deltaLeakD2U2 [expr $leakPre - $leakAftD2U2]
-    set senD2U2 [expr $deltaLeakD2U2 * $cellSlack / $pathNum]
-
-    set finalName $cellNameDown1
+    set finalName $cellNameSizeDown
     set finalSen $senD1U0
-    if { $finalSen < $senD2U0 } { 
-	set finalName $cellNameDown2
-	set finalSen $senD2U0
-    } else { if { $finalSen < $senD0U1 } { 
-	set finalName $cellNameUp1
+     if { $finalSen < $senD0U1 } { 
+	set finalName $cellNameVtUp
 	set finalSen $senD0U1
-    } else { if { $finalSen < $senD0U2 } { 
-	set finalName $cellNameUp2
-	set finalSen $senD0U2
-    } else { if { $finalSen < $senD1U1 } { 
-	set finalName $cellNameDown1Up1
-	set finalSen $senD1U1
-    } else { if { $finalSen < $senD2U1 } { 
-	set finalName $cellNameDown2Up1
-	set finalSen $senD2U1
-    } else { if { $finalSen < $senD1U2 } { 
-	set finalName $cellNameDown1Up2
-	set finalSen $senD1U2
-    } else { if { $finalSen < $senD2U2 } { 
-	set finalName $cellNameDown2Up2
-	set finalSen $senD2U2
-   } } } } } } }
+    } 
 
    set_user_attribute $cell Sensitivity $finalSen
    set_user_attribute $cell newlibcellName $finalName
@@ -586,11 +529,104 @@ proc setSensitivity {cell} {
     #set delayPre [PtCellDelay $cell_name]
 }
 
-# An example to sort cells based on their sensitivity
+# sort cells based on their sensitivity
 proc sortSensitivity { cell_collection } {
     foreach_in_collection cell $cell_collection {
       set flag [setSensitivity $cell] 
     }
     set new_collection [sort_collection -descending $cell_collection {Sensitivity}]
     return $new_collection
+}
+
+proc setTotalSlack { cell } {
+  
+  set cellName [get_attri $cell base_name]
+  set libcell [get_lib_cells -of_objects $cellName]
+  set libcellName [get_attri $libcell base_name]
+  
+  if {$libcellName == "ms00f80"} {
+      set_user_attribute $cell totalSlack 0.0
+      set_user_attribute $cell speedUpCellName $libcellName
+      return 0
+    }
+  
+  #get number of path
+    set pin [get_pins -of $cellName]
+    set path [get_timing_path -through $pin]
+    set pathNum [sizeof $path]
+    if {$path <= 0} {
+      set_user_attribute $cell totalSlack 0.0
+      set_user_attribute $cell speedUpCellName $libcellName
+      return 0
+    }
+  
+   set preDelay [PtCellDelay $cellName]
+
+   set cellNameSizeUp [getNextSizeUp $libcellName]
+   set cellNameVtDown [getNextVtUp $libcellName]
+    
+   if { $cellNameSizeUp != $libcellName } {
+     size_cell $cellName $cellNameSizeUp
+     set aftDelayU [PtCellDelay $cellName]
+     size_cell $cellName $libcellName
+     set deltaDelayU [expr $preDelay - $aftDelayU]
+     set tSlackU [expr $deltaDelayU * $deltaDelayU * $pathNum]
+    } else {
+     set tSlackU 0.0
+    }
+
+    if { $cellNameVtDown != $libcellName } {
+     size_cell $cellName $cellNameVtDown
+     set aftDelayD [PtCellDelay $cellName]
+     size_cell $cellName $libcellName
+     set deltaDelayD [expr $preDelay - $aftDelayD]
+     set tSlackD [expr $deltaDelayD * $deltaDelayD * $pathNum]
+    } else {
+     set tSlackD 0.0
+    }
+
+    set finalSlack $tSlackU
+    set finalName $cellNameSizeUp
+    if { $finalSlack < $tSlackD } {
+	set finalSlack $tSlackD
+	set finalName $cellNameVtDown
+    }
+
+    set_user_attribute $cell totalSlack $finalSlack
+    set_user_attribute $cell speedUpCellName $finalName
+
+    return 1
+}
+
+# sort cells based on their TotalSlack
+proc sortTotalSlack { cell_collection } {
+    foreach_in_collection cell $cell_collection {
+      set flag [setTotalSlack $cell] 
+    }
+    set new_collection [sort_collection -descending $cell_collection {totalSlack}]
+    return $new_collection
+}
+
+proc defineAttribute { } {
+  define_user_attribute -type float -class cell Sensitivity
+  define_user_attribute -type string -class cell newlibcellName
+  define_user_attribute -type float -class cell totalSlack
+  define_user_attribute -type string -class cell speedUpCellName
+  return 1
+}
+
+proc WorstPath { clk } {
+    set path [get_timing_paths -nworst 1 -group $clk]
+    return $path
+}
+
+
+proc CellOnPath { path } {
+    foreach_in_collection point [ get_attri $path points ] {
+            set obj [ get_attri $point object ]
+    if { [ get_attri $obj object_class] == "pin" && [ get_attri $obj direction ] == "out" } {
+            set cell [get_cells -of $obj]
+            set cells [add_to_collection $cells $cell]
+    }
+}
 }
