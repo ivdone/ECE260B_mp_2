@@ -461,16 +461,23 @@ proc checkLegit { cell_name } {
     return 1
 }
 
-proc setSensitivity {cell} {
+proc setVtSensitivity {cell} {
     #get cell slack
     set cellName [get_attri $cell base_name]
     set libcell [get_lib_cells -of_objects $cellName]
     set libcellName [get_attri $libcell base_name]
+	
+	if {$libcellName == "ms00f80"} {
+      set_user_attribute $cell VtSensitivity 0.0
+      set_user_attribute $cell newVtName $libcellName
+      return 0
+    }
+	
     set cellSlack [PtCellSlack $cellName]
     
     if {$cellSlack <= 0} {
-      set_user_attribute $cell Sensitivity 0.0
-      set_user_attribute $cell newlibcellName $libcellName
+      set_user_attribute $cell VtSensitivity 0.0
+      set_user_attribute $cell newVtName $libcellName
       return 0
     }
 
@@ -479,31 +486,16 @@ proc setSensitivity {cell} {
     set path [get_timing_path -through $pin]
     set pathNum [sizeof $path]
     if {$path <= 0} {
-      set_user_attribute $cell Sensitivity 0.0
-      set_user_attribute $cell newlibcellName $libcellName
+      set_user_attribute $cell VtSensitivity 0.0
+      set_user_attribute $cell newVtName $libcellName
       return 0
     }
     
     #get leakage power based on different modifications
     set leakPre [PtLeakPower]
-
-    if {$libcellName == "ms00f80"} {
-      set_user_attribute $cell Sensitivity 0.0
-      set_user_attribute $cell newlibcellName $libcellName
-      return 0
-    }
-    set cellNameSizeDown [getNextSizeDown $libcellName]
+	
     set cellNameVtUp [getNextVtDown $libcellName]
     
-    if { $cellNameSizeDown != $libcellName } {
-    size_cell $cellName $cellNameSizeDown
-    set leakAftD1U0 [PtLeakPower]
-    size_cell $cellName $libcellName
-    set deltaLeakD1U0 [expr $leakPre - $leakAftD1U0]
-    set senD1U0 [expr $deltaLeakD1U0 * $cellSlack / $pathNum]
-    } else {
-      set senD1U0 0.0
-    }
     
     if { $cellNameVtUp != $libcellName } {
     size_cell $cellName $cellNameVtUp
@@ -515,26 +507,78 @@ proc setSensitivity {cell} {
     set senD0U1 0.0
     }
 
-    set finalName $cellNameSizeDown
-    set finalSen $senD1U0
-     if { $finalSen < $senD0U1 } { 
-	set finalName $cellNameVtUp
-	set finalSen $senD0U1
-    } 
-
-   set_user_attribute $cell Sensitivity $finalSen
-   set_user_attribute $cell newlibcellName $finalName
+	set_user_attribute $cell VtSensitivity $senD0U1
+    set_user_attribute $cell newVtName $cellNameVtUp
 
     return 1
-    #set delayPre [PtCellDelay $cell_name]
+}
+
+proc setSizeSensitivity {cell} {
+    #get cell slack
+    set cellName [get_attri $cell base_name]
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+	
+	if {$libcellName == "ms00f80"} {
+      set_user_attribute $cell SizeSensitivity 0.0
+      set_user_attribute $cell newSizeName $libcellName
+      return 0
+    }
+	
+    set cellSlack [PtCellSlack $cellName]
+    
+    if {$cellSlack <= 0} {
+      set_user_attribute $cell SizeSensitivity 0.0
+      set_user_attribute $cell newSizeName $libcellName
+      return 0
+    }
+
+    #get number of path
+    set pin [get_pins -of $cellName]
+    set path [get_timing_path -through $pin]
+    set pathNum [sizeof $path]
+    if {$path <= 0} {
+      set_user_attribute $cell SizeSensitivity 0.0
+      set_user_attribute $cell newSizeName $libcellName
+      return 0
+    }
+    
+    #get leakage power based on different modifications
+    set leakPre [PtLeakPower]
+
+    set cellNameSizeDown [getNextSizeDown $libcellName]
+    
+    if { $cellNameSizeDown != $libcellName } {
+    size_cell $cellName $cellNameSizeDown
+    set leakAftD1U0 [PtLeakPower]
+    size_cell $cellName $libcellName
+    set deltaLeakD1U0 [expr $leakPre - $leakAftD1U0]
+    set senD1U0 [expr $deltaLeakD1U0 * $cellSlack / $pathNum]
+    } else {
+      set senD1U0 0.0
+    }
+
+    set_user_attribute $cell SizeSensitivity $senD1U0
+    set_user_attribute $cell newSizeName $cellNameSizeDown
+
+    return 1
 }
 
 # sort cells based on their sensitivity
-proc sortSensitivity { cell_collection } {
+proc sortVtSensitivity { cell_collection } {
     foreach_in_collection cell $cell_collection {
-      set flag [setSensitivity $cell] 
+      set flag [setVtSensitivity $cell] 
     }
-    set new_collection [sort_collection -descending $cell_collection {Sensitivity}]
+    set new_collection [sort_collection -descending $cell_collection {VtSensitivity}]
+    return $new_collection
+}
+
+# sort cells based on their sensitivity
+proc sortSizeSensitivity { cell_collection } {
+    foreach_in_collection cell $cell_collection {
+      set flag [setSizeSensitivity $cell] 
+    }
+    set new_collection [sort_collection -descending $cell_collection {SizeSensitivity}]
     return $new_collection
 }
 
@@ -608,10 +652,12 @@ proc sortTotalSlack { cell_collection } {
 }
 
 proc defineAttribute { } {
-  define_user_attribute -type float -class cell Sensitivity
-  define_user_attribute -type string -class cell newlibcellName
+  define_user_attribute -type float -class cell SizeSensitivity
+  define_user_attribute -type string -class cell newSizeName
   define_user_attribute -type float -class cell totalSlack
   define_user_attribute -type string -class cell speedUpCellName
+  define_user_attribute -type float -class cell VtSensitivity
+  define_user_attribute -type string -class cell newVtName
   return 1
 }
 
@@ -622,11 +668,13 @@ proc WorstPath { clk } {
 
 
 proc CellOnPath { path } {
+	set cells ""
     foreach_in_collection point [ get_attri $path points ] {
             set obj [ get_attri $point object ]
     if { [ get_attri $obj object_class] == "pin" && [ get_attri $obj direction ] == "out" } {
             set cell [get_cells -of $obj]
-            set cells [add_to_collection $cells $cell]
+            add_to_collection $cells $cell
     }
-}
+	}
+	return $cells
 }

@@ -15,43 +15,238 @@ set cellList [get_cell *]
 set VtswapCnt 0
 set SizeswapCnt 0
 
-set newCellList [sortSensitivity $cellList]
+set flag [defineAttribute]
+
+
+set newCellList [sortVtSensitivity $cellList]
 
 foreach_in_collection cell $newCellList {
     set cellName [get_attri $cell base_name]
     set libcell [get_lib_cells -of_objects $cellName]
     set libcellName [get_attri $libcell base_name]
     
-    set newlibcellName [get_attri $cell newlibcellName]
-    size_cell $cellName $libcellName
-        
+    set newlibcellName [get_attri $cell newVtName]
+    if { $newlibcellName != $libcellName} {
+	size_cell $cellName $newlibcellName
         set checkRs [ checkLegit $cellName ]
         if { $checkRs < 1.0 } {
             size_cell $cellName $libcellName
         } else {
             incr VtswapCnt
             puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
-        }
+        
+				set libcell [get_lib_cells -of_objects $cellName]
+				set libcellName [get_attri $libcell base_name]
+
+				if { [regexp {[a-z][a-z][0-9][0-9]m[0-9][0-9]} $libcellName] } { 
+					set newlibcellName [string replace $libcellName 4 4 s] 
+					size_cell $cellName $newlibcellName
+					
+					set checkRs [ checkLegit $cellName ]
+					if { $checkRs == 0 } {
+						size_cell $cellName $libcellName
+					} else {
+						incr VtswapCnt
+						puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+					}
+				}
+		}
+	}
+	
 }
 
-set newCellList [sortSensitivity $cellList]
+set newCellList [sortSizeSensitivity $cellList]
 
 foreach_in_collection cell $newCellList {
     set cellName [get_attri $cell base_name]
     set libcell [get_lib_cells -of_objects $cellName]
     set libcellName [get_attri $libcell base_name]
     
-    set newlibcellName [get_attri $cell newlibcellName]
-    size_cell $cellName $libcellName
-        
+    set newlibcellName [get_attri $cell newSizeName]
+    if { $newlibcellName != $libcellName} {
+	size_cell $cellName $newlibcellName 
         set checkRs [ checkLegit $cellName ]
         if { $checkRs < 1.0 } {
             size_cell $cellName $libcellName
         } else {
             incr VtswapCnt
             puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
-        }
+				
+				set libcell [get_lib_cells -of_objects $cellName]
+				set libcellName [get_attri $libcell base_name]
+				set newlibcellName [getNextSizeDown $libcellName]
+				if { $libcellName != $newlibcellName } {
+					
+				size_cell $cellName $newlibcellName
+					
+				set checkRs [ checkLegit $cellName ]
+				if { $checkRs == 0 } {
+					size_cell $cellName $libcellName
+				} else {
+					incr SizeswapCnt
+					puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+						
+						set libcell [get_lib_cells -of_objects $cellName]
+						set libcellName [get_attri $libcell base_name]
+						set newlibcellName [getNextSizeDown $libcellName]
+						if { $libcellName != $newlibcellName } {
+							
+							size_cell $cellName $newlibcellName
+								
+							set checkRs [ checkLegit $cellName ]
+							if { $checkRs == 0 } {
+								size_cell $cellName $libcellName
+							} else {
+								incr SizeswapCnt
+								puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+							
+								set libcell [get_lib_cells -of_objects $cellName]
+								set libcellName [get_attri $libcell base_name]
+								set newlibcellName [getNextSizeDown $libcellName]
+								if { $libcellName != $newlibcellName } {
+									
+									size_cell $cellName $newlibcellName
+										
+									set checkRs [ checkLegit $cellName ]
+									if { $checkRs == 0 } {
+										size_cell $cellName $libcellName
+									} else {
+										incr SizeswapCnt
+										puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+									}
+								}
+							}
+						}
+				}
+		}
+      }
+	}
 }
+
+puts $outFp "======================================" 
+puts $outFp "speed up bottleneck cells" 
+
+set criticalPath [WorstPath clk]
+set newCellList [CellOnPath $criticalPath]
+set counter 0
+set bound [expr 0.1 * [sizeof $cellList]]
+
+foreach_in_collection cell $newCellList {
+    set cellName [get_attri $cell base_name]
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+
+    if { $counter > $bound  } {
+	break
+    }
+    set newlibcellName [get_attri $cell speedUpCellName]
+    if { $newlibcellName != $libcellName} {
+	size_cell $cellName $newlibcellName
+        
+        set checkRs [ checkLegit $cellName ]
+        if { $checkRs < 1.0 } {
+            size_cell $cellName $libcellName
+        } else {
+            incr VtswapCnt
+	    incr counter
+            puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+        }
+      }
+}
+
+puts $outFp "======================================" 
+
+
+set newCellList [sortVtSensitivity $cellList]
+
+foreach_in_collection cell $newCellList {
+    set cellName [get_attri $cell base_name]
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    
+    set newlibcellName [get_attri $cell newVtName]
+    if { $newlibcellName != $libcellName} {
+	size_cell $cellName $newlibcellName
+        set checkRs [ checkLegit $cellName ]
+        if { $checkRs < 1.0 } {
+            size_cell $cellName $libcellName
+        } else {
+            incr VtswapCnt
+            puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+        
+				set libcell [get_lib_cells -of_objects $cellName]
+				set libcellName [get_attri $libcell base_name]
+
+				if { [regexp {[a-z][a-z][0-9][0-9]m[0-9][0-9]} $libcellName] } { 
+					set newlibcellName [string replace $libcellName 4 4 s] 
+					size_cell $cellName $newlibcellName
+					
+					set checkRs [ checkLegit $cellName ]
+					if { $checkRs == 0 } {
+						size_cell $cellName $libcellName
+					} else {
+						incr VtswapCnt
+						puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+					}
+				}
+		}
+	}
+	
+}
+
+set newCellList [sortSizeSensitivity $cellList]
+
+foreach_in_collection cell $newCellList {
+    set cellName [get_attri $cell base_name]
+    set libcell [get_lib_cells -of_objects $cellName]
+    set libcellName [get_attri $libcell base_name]
+    
+    set newlibcellName [get_attri $cell newSizeName]
+    if { $newlibcellName != $libcellName} {
+	size_cell $cellName $newlibcellName 
+        set checkRs [ checkLegit $cellName ]
+        if { $checkRs < 1.0 } {
+            size_cell $cellName $libcellName
+        } else {
+            incr VtswapCnt
+            puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+				
+				set libcell [get_lib_cells -of_objects $cellName]
+				set libcellName [get_attri $libcell base_name]
+				set newlibcellName [getNextSizeDown $libcellName]
+				if { $libcellName != $newlibcellName } {
+				
+				
+				size_cell $cellName $newlibcellName
+					
+				set checkRs [ checkLegit $cellName ]
+				if { $checkRs == 0 } {
+					size_cell $cellName $libcellName
+				} else {
+					incr SizeswapCnt
+					puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+				
+						set libcell [get_lib_cells -of_objects $cellName]
+						set libcellName [get_attri $libcell base_name]
+						set newlibcellName [getNextSizeDown $libcellName]
+						if { $libcellName != $newlibcellName } {
+							
+							size_cell $cellName $newlibcellName
+								
+							set checkRs [ checkLegit $cellName ]
+							if { $checkRs == 0 } {
+								size_cell $cellName $libcellName
+							} else {
+								incr SizeswapCnt
+								puts $outFp "- cell ${cellName} is swapped from $libcellName to $newlibcellName"
+							}
+						}
+				}
+				}
+		}
+      }
+}
+
 
 set finalWNS  [ PtWorstSlack clk ]
 set finalLeak [ PtLeakPower ]
